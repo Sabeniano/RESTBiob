@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import './App.css';
 import Home from './Components/Home/Home';
 import Showtimes from './Components/Showtimes/Showtimes';
-import PostMovie from './Components/PostMovie/PostMovie';
+import MovieForm from './Components/Movies/MovieForm';
 import Movies from './Components/Movies/Movies';
 import Header from './Components/Layouts/Header/Header';
 import Footer from './Components/Layouts/Footer/Footer';
@@ -27,7 +27,7 @@ class App extends Component {
               <Route path='/' component ={Home} exact/>
               <Route path='/showtimes' component ={Showtimes} exact/>
               <Route path="/movies" component ={Movies} exact/>
-              <Route path="/postmovie" component ={PostMovie} exact/>
+              <Route path="/movieform" component ={MovieForm} exact/>
               <Route path="/callback" component={Callback} />
             </Switch>
             </ConnectedRouter>

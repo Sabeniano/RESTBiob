@@ -1,8 +1,8 @@
-import './PostMovie.css';
+import './MovieForm.css';
 import React, { Component } from 'react';
 import axios from 'axios';
 
-class PostMovie extends Component {
+class MovieForm extends Component {
   constructor(props) {
     super(props)
     this.state = {
@@ -114,4 +114,4 @@ class PostMovie extends Component {
     );
   }
 }
-export default PostMovie;
+export default MovieForm;

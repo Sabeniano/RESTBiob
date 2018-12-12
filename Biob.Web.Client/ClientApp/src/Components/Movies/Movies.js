@@ -1,27 +1,17 @@
 import './Movies.css';
-import {Link} from 'react-router-dom';
 import React, { Component } from 'react';
-import axios from 'axios';
-import Movie from '../Movie/Movie'
-var url = 'https://localhost:44390/api/v1/movies';
+import PropTypes from 'prop-types';
+import {Link} from 'react-router-dom';
+import { connect } from 'react-redux';
+import { fetchMovies } from '../../actions/MoviesActions';
 
 class Movies extends Component {
-  constructor(props) {
-    super(props)
-    this.state = {
-      movies: []
-    }
-  }
-
-  componentDidMount() {
-    axios.get(url)
-    .then(res => {
-      this.setState({movies: res.data})
-    })
+  componentWillMount() {
+    this.props.fetchMovies();
   }
 
   render() {
-    const moviesItems = this.state.movies.map(movies => (
+    const moviesItems = this.props.movies.map(movies => (
       <div key={movies.id}>
         <div className="pictureContent">
           <img src={movies.poster} alt=""/>
@@ -41,5 +31,15 @@ class Movies extends Component {
 		  </div>
     )
   }
+};
+
+Movies.propTypes = {
+  fecthMovies: PropTypes.func.isRequired,
+  movies: PropTypes.array.isRequired
 }
-export default Movies;
+
+const mapStateToProps = state => ({
+  movies: state.movies.items
+});
+
+export default connect(mapStateToProps, { fetchMovies })(Movies);
