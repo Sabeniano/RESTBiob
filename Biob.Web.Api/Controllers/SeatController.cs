@@ -13,6 +13,7 @@ using System.Dynamic;
 using System.Linq;
 using Biob.Services.Data.DtoModels.SeatDtos;
 using Biob.Web.Api.Filters;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Biob.Web.Api.Controllers
 {
@@ -33,11 +34,19 @@ namespace Biob.Web.Api.Controllers
             _urlHelper = urlHelper;
         }
 
-
+        [SwaggerOperation(
+            Summary = "Retrieve every seat",
+            Description = "Retrieves every seat in the database",
+            Consumes = new string[] { },
+            Produces = new string[] { "application/json", "application/vnd.biob.json+hateoas" })]
+        [SwaggerResponse(200, "Successfully retrieved every seat", typeof(SeatDto[]))]
+        [SwaggerResponse(400, "Request data is invalid", null)]
         [HttpGet(Name = "GetSeats")]
         [GuidCheckActionFilter(new string[] { "hallId" })]
-        public async Task<IActionResult> GetAllSeatsAsync([FromRoute] Guid hallId, [FromQuery]RequestParameters requestParameters,
-                                                          [FromHeader(Name = "Accept")] string mediaType)
+        public async Task<IActionResult> GetAllSeatsAsync(
+            [FromRoute] Guid hallId,
+            [FromQuery]RequestParameters requestParameters,
+            [FromHeader(Name = "Accept")] string mediaType)
         {
             if (!await _seatRepository.HallExists(hallId))
             {
@@ -83,9 +92,19 @@ namespace Biob.Web.Api.Controllers
             }
         }
 
+        [SwaggerOperation(
+            Summary = "Retrieve one seat by ID",
+            Description = "Retrieves seat in the database by id",
+            Consumes = new string[] { },
+            Produces = new string[] { "application/json", "application/vnd.biob.json+hateoas" })]
+        [SwaggerResponse(200, "Successfully retrieved a seat", typeof(SeatDto))]
+        [SwaggerResponse(400, "Request data is invalid", null)]
         [HttpGet("{seatId}", Name = "GetSeat")]
         [GuidCheckActionFilter(new string[] { "seatId", "hallId" })]
-        public async Task<IActionResult> GetOneSeatAsync([FromRoute] Guid hallId,[FromRoute] Guid seatId, [FromHeader(Name = "Accept")] string mediaType)
+        public async Task<IActionResult> GetOneSeatAsync(
+            [FromRoute, SwaggerParameter(Description = "the hall ID to find seat by", Required = true)] Guid hallId,
+            [FromRoute, SwaggerParameter(Description = "the ID to find seat by", Required = true)] Guid seatId,
+            [FromHeader(Name = "Accept"), SwaggerParameter(Description = "media type to request betwen json or json+hateoas")] string mediaType)
         {
             if (!await _seatRepository.HallExists(hallId))
             {
@@ -115,9 +134,18 @@ namespace Biob.Web.Api.Controllers
             }
         }
 
+        [SwaggerOperation(
+            Summary = "Create a seat",
+            Description = "creates a seat in the database",
+            Consumes = new string[] { "application/json" },
+            Produces = new string[] { "application/json", "application/vnd.biob.json+hateoas" })]
+        [SwaggerResponse(200, "Successfully created a seat", typeof(SeatDto))]
         [HttpPost]
         [GuidCheckActionFilter(new string[] { "hallId" })]
-        public async Task<IActionResult> CreateSeatAsync([FromRoute] Guid hallId, [FromBody] SeatToCreateDto seatToCreate, [FromHeader(Name = "Accept")] string mediaType)
+        public async Task<IActionResult> CreateSeatAsync(
+            [FromRoute, SwaggerParameter(Description = "the hall ID to create seat by", Required = true)] Guid hallId,
+            [FromBody, SwaggerParameter(Description = "Seats to create", Required = true)] SeatToCreateDto seatToCreate,
+            [FromHeader(Name = "Accept"), SwaggerParameter(Description = "media type to request betwen json or json+hateoas")] string mediaType)
         {
 
             if (!await _seatRepository.HallExists(hallId))
@@ -152,9 +180,20 @@ namespace Biob.Web.Api.Controllers
             }
         }
 
+        [SwaggerOperation(
+            Summary = "Update a seat",
+            Description = "Updates a seat in the database",
+            Consumes = new string[] { "application/json" },
+            Produces = new string[] { "application/json", "application/vnd.biob.json+hateoas" })]
+        [SwaggerResponse(200, "Successfully updated a seat", typeof(SeatDto))]
+        [SwaggerResponse(400, "Request data is invalid", null)]
         [HttpPut("{seatId}", Name = "UpdateSeat")]
         [GuidCheckActionFilter(new string[] { "seatId", "hallId" })]
-        public async Task<IActionResult> UpdateSeatByIdAsync([FromRoute] Guid hallId ,[FromRoute] Guid seatId, [FromBody] SeatToUpdateDto seatToUpdate, [FromHeader(Name = "Accept")] string mediaType)
+        public async Task<IActionResult> UpdateSeatByIdAsync(
+            [FromRoute, SwaggerParameter(Description = "Hall id of seat to update", Required = true)] Guid hallId,
+            [FromRoute, SwaggerParameter(Description = "Id of seat to update", Required = true)] Guid seatId,
+            [FromBody, SwaggerParameter(Description = "Seat to update", Required = true)] SeatToUpdateDto seatToUpdate,
+            [FromHeader(Name = "Accept"), SwaggerParameter(Description = "media type to request betwen json or json+hateoas")] string mediaType)
         {
 
             if (!await _seatRepository.HallExists(hallId))
@@ -206,9 +245,20 @@ namespace Biob.Web.Api.Controllers
 
         }
 
+        [SwaggerOperation(
+            Summary = "Partially update a seat",
+            Description = "Partially updates a seat in the database",
+            Consumes = new string[] { "application/json" },
+            Produces = new string[] { "application/json", "application/vnd.biob.json+hateoas" })]
+        [SwaggerResponse(200, "Successfully updated a seat", typeof(SeatDto))]
+        [SwaggerResponse(400, "Request data is invalid", null)]
         [HttpPatch("{seatId}", Name = "PartiallyUpdateSeat")]
         [GuidCheckActionFilter(new string[] { "seatId", "hallId" })]
-        public async Task<IActionResult> PartiuallyUpdateSeatByIdAsync([FromRoute] Guid hallId, [FromRoute] Guid seatId, JsonPatchDocument<SeatToUpdateDto> patchDoc, [FromHeader(Name = "Accept")] string mediaType)
+        public async Task<IActionResult> PartiuallyUpdateSeatByIdAsync(
+            [FromRoute, SwaggerParameter(Description = "ID of seat to update", Required = true)] Guid hallId,
+            [FromRoute, SwaggerParameter(Description = "ID of hall to update seat", Required = true)] Guid seatId,
+            [FromBody, SwaggerParameter(Description = "Jsonpatch operation document to update", Required = true)] JsonPatchDocument<SeatToUpdateDto> patchDoc,
+            [FromHeader(Name = "Accept"), SwaggerParameter(Description = "media type to request betwen json or json+hateoas")] string mediaType)
         {
 
             if (!await _seatRepository.HallExists(hallId))
@@ -280,9 +330,18 @@ namespace Biob.Web.Api.Controllers
             return NoContent();
         }
 
+        [SwaggerOperation(
+           Summary = "Soft deletes a seat",
+           Description = "Soft deletes a seat in the database",
+           Consumes = new string[] { },
+           Produces = new string[] { "application/json", "application/vnd.biob.json+hateoas" })]
+        [SwaggerResponse(200, "Successfully deleted a seat", null)]
+        [SwaggerResponse(400, "Request data is invalid", null)]
         [HttpDelete("{seatId}", Name = "DeleteSeat")]
         [GuidCheckActionFilter(new string[] { "seatId", "hallId" })]
-        public async Task<IActionResult> DeleteSeatByIdAsync([FromRoute] Guid hallId, [FromRoute]Guid seatId)
+        public async Task<IActionResult> DeleteSeatByIdAsync(
+            [FromRoute, SwaggerParameter(Description = "Id of hall to delete seat", Required = true)] Guid hallId,
+            [FromRoute, SwaggerParameter(Description = "ID of seat to delete", Required = true)] Guid seatId)
         {
             if (!await _seatRepository.HallExists(hallId))
             {
@@ -306,6 +365,12 @@ namespace Biob.Web.Api.Controllers
             return NoContent();
         }
 
+        [SwaggerOperation(
+            Summary = "Get option information",
+            Description = "Gets HTTP methods options for this route",
+            Consumes = new string[] { },
+            Produces = new string[] { })]
+        [SwaggerResponse(200, "Successfully returned options in http header", null)]
         [HttpOptions]
         public IActionResult GetSeatsOptions()
         {
@@ -313,6 +378,12 @@ namespace Biob.Web.Api.Controllers
             return Ok();
         }
 
+        [SwaggerOperation(
+            Summary = "Get option information",
+            Description = "Gets HTTP methods options for this route",
+            Consumes = new string[] { },
+            Produces = new string[] { })]
+        [SwaggerResponse(200, "Successfully returned options in http header", null)]
         [HttpOptions("{seatId}")]
         public IActionResult GetSeatOptions()
         {

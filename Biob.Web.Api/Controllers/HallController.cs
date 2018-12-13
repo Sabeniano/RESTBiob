@@ -13,6 +13,7 @@ using Biob.Services.Data.Helpers;
 using System.Dynamic;
 using Biob.Services.Data.DtoModels.HallDtos;
 using Biob.Web.Api.Filters;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Biob.Web.Api.Controllers
 {
@@ -31,8 +32,16 @@ namespace Biob.Web.Api.Controllers
             _logger = logger;
         }
 
+        [SwaggerOperation(
+            Summary = "Retrieve every halls",
+            Description = "Retrieves every halls in the database",
+            Consumes = new string[] { },
+            Produces = new string[] { "application/json", "application/vnd.biob.json+hateoas" })]
+        [SwaggerResponse(200, "Successfully retrieved every hall", typeof(HallDto[]))]
+        [SwaggerResponse(400, "Request data is invalid", null)]
         [HttpGet]
-        public async Task<IActionResult> GetAllHallsAsync([FromHeader(Name = "Accept")] string mediaType)
+        public async Task<IActionResult> GetAllHallsAsync(
+            [FromHeader(Name = "Accept"), SwaggerParameter(Description = "media type to request between json or json+hateoas")] string mediaType)
         {
             var halls = await _hallRepository.GetAllHallsAsync();
 
@@ -46,9 +55,18 @@ namespace Biob.Web.Api.Controllers
             return Ok(mappedHalls);
         }
 
+        [SwaggerOperation(
+            Summary = "Retrieve one hall by ID",
+            Description = "Retrieves hall in the database by id",
+            Consumes = new string[] { },
+            Produces = new string[] { "application/json", "application/vnd.biob.json+hateoas" })]
+        [SwaggerResponse(200, "Successfully retrieved a hall", typeof(HallDto))]
+        [SwaggerResponse(400, "Request data is invalid", null)]
         [HttpGet("{hallId}", Name = "GetHall")]
         [GuidCheckActionFilter(new string[] { "hallId" })]
-        public async Task<IActionResult> GetOneHallAsync([FromRoute] Guid hallId, [FromHeader(Name = "Accept")] string mediaType)
+        public async Task<IActionResult> GetOneHallAsync(
+            [FromRoute, SwaggerParameter(Description = "the ID to find hall by", Required = true)] Guid hallId, 
+            [FromHeader(Name = "Accept"), SwaggerParameter(Description = "media type to request between json or json+hateoas")] string mediaType)
         {
             var foundHall = await _hallRepository.GetHallAsync(hallId);
 
@@ -63,18 +81,26 @@ namespace Biob.Web.Api.Controllers
             {
                 var links = CreateLinksForHall(hallId);
 
-                var linkedGenre = hallToReturn.ShapeData(null) as IDictionary<string, object>;
+                var linkedHall = hallToReturn.ShapeData(null) as IDictionary<string, object>;
 
-                linkedGenre.Add("links", links);
+                linkedHall.Add("links", links);
 
-                return Ok(linkedGenre);
+                return Ok(linkedHall);
             }
 
             return Ok(hallToReturn);
         }
 
+        [SwaggerOperation(
+            Summary = "Create a hall",
+            Description = "Creates a hall in the database",
+            Consumes = new string[] { "application/json" },
+            Produces = new string[] { "application/json", "application/vnd.biob.json+hateoas" })]
+        [SwaggerResponse(200, "Successfully created a hall", typeof(HallDto))]
         [HttpPost]
-        public async Task<IActionResult> CreateHallAsync([FromBody] HallToCreateDto hallToCreate)
+        public async Task<IActionResult> CreateHallAsync(
+            [FromBody, SwaggerParameter(Description = "Hall to create", Required = true)] HallToCreateDto hallToCreate,
+            [FromHeader(Name = "Accept"), SwaggerParameter(Description = "media type to request between json or json+hateoas")] string mediaType)
         {
 
             var hallToAdd = Mapper.Map<Hall>(hallToCreate);
@@ -85,12 +111,33 @@ namespace Biob.Web.Api.Controllers
                 _logger.LogError("Saving changes to database while creating a hall failed");
             }
 
+            if (mediaType == "application/vnd.biob.json+hateoas")
+            {
+                var links = CreateLinksForHall(hallToAdd.Id);
+
+                var linkedHall = hallToAdd.ShapeData(null) as IDictionary<string, object>;
+
+                linkedHall.Add("links", links);
+
+                return CreatedAtRoute("GetHall", new { hallId = hallToAdd.Id }, linkedHall);
+            }
+
             return CreatedAtRoute("GetHall", new { hallId = hallToAdd.Id }, hallToAdd);
         }
 
+        [SwaggerOperation(
+            Summary = "Update a hall",
+            Description = "Updates a hall in the database",
+            Consumes = new string[] { "application/json" },
+            Produces = new string[] { "application/json", "application/vnd.biob.json+hateoas" })]
+        [SwaggerResponse(200, "Successfully updated a hall", typeof(HallDto))]
+        [SwaggerResponse(400, "Request data is invalid", null)]
         [HttpPut("{hallId}", Name = "UpdateHall")]
         [GuidCheckActionFilter(new string[] { "hallId" })]
-        public async Task<IActionResult> UpdateHallByIdAsync([FromRoute] Guid hallId, [FromBody] HallToUpdateDto hallToUpdate)
+        public async Task<IActionResult> UpdateHallByIdAsync(
+            [FromRoute, SwaggerParameter(Description = "The id of hall to update", Required = true)] Guid hallId, 
+            [FromBody, SwaggerParameter(Description = "Hall to update", Required = true)] HallToUpdateDto hallToUpdate,
+            [FromHeader(Name = "Accept"), SwaggerParameter(Description = "media type to request betwen json or json+hateoas")] string mediaType)
         {
             var hallFromDb = await _hallRepository.GetHallAsync(hallId);
 
@@ -108,6 +155,17 @@ namespace Biob.Web.Api.Controllers
 
                 var hallToReturn = Mapper.Map<HallDto>(hallEntity);
 
+                if (mediaType == "application/vnd.biob.json+hateoas")
+                {
+                    var links = CreateLinksForHall(hallToReturn.Id);
+
+                    var linkedHall = hallToReturn.ShapeData(null) as IDictionary<string, object>;
+
+                    linkedHall.Add("links", links);
+
+                    return CreatedAtRoute("GetHall", new { hallId = hallToReturn.Id }, linkedHall);
+                }
+
                 return CreatedAtRoute("GetHall", new { hallId = hallToReturn.Id }, hallToReturn);
             }
 
@@ -124,23 +182,19 @@ namespace Biob.Web.Api.Controllers
 
         }
 
-        [HttpOptions]
-        public IActionResult GetHallsOptions()
-        {
-            Response.Headers.Add("Allow", "GET,POST,OPTIONS");
-            return Ok();
-        }
-
-        [HttpOptions("{hallId}")]
-        public IActionResult GetHallOptions()
-        {
-            Response.Headers.Add("Allow", "GET,PATCH,PUT,OPTIONS");
-            return Ok();
-        }
-
+        [SwaggerOperation(
+            Summary = "Partially update a hall",
+            Description = "Partially updates a hall in the database",
+            Consumes = new string[] { "application/json-patch+json" },
+            Produces = new string[] { "application/json", "application/vnd.biob.json+hateoas" })]
+        [SwaggerResponse(200, "Successfully partially updated a hall", typeof(HallDto))]
+        [SwaggerResponse(400, "Request data is invalid", null)]
         [HttpPatch("{hallId}", Name = "PartiallyUpdateHall")]
         [GuidCheckActionFilter(new string[] { "hallId" })]
-        public async Task<IActionResult> PartiuallyUpdateHallByIdAsync([FromRoute] Guid hallId, JsonPatchDocument<HallToUpdateDto> patchDoc)
+        public async Task<IActionResult> PartiuallyUpdateHallByIdAsync(
+            [FromRoute, SwaggerParameter(Description = "Id of hall to update", Required = true)] Guid hallId,
+            [FromBody, SwaggerParameter(Description = "Jsonpatch operation document to update", Required = true)] JsonPatchDocument<HallToUpdateDto> patchDoc,
+            [FromHeader(Name = "Accept"), SwaggerParameter(Description = "media type to request betwen json or json+hateoas")] string mediaType)
         {
             if (patchDoc == null)
             {
@@ -171,6 +225,17 @@ namespace Biob.Web.Api.Controllers
 
                 var hallToReturn = Mapper.Map<HallDto>(hallToAddToDb);
 
+                if (mediaType == "application/vnd.biob.json+hateoas")
+                {
+                    var links = CreateLinksForHall(hallToReturn.Id);
+
+                    var linkedHall = hallToReturn.ShapeData(null) as IDictionary<string, object>;
+
+                    linkedHall.Add("links", links);
+
+                    return CreatedAtRoute("GetHall", new { hallId = hallToReturn.Id }, linkedHall);
+                }
+
                 return CreatedAtRoute("GetHall", new { hallId = hallToReturn.Id }, hallToReturn);
             }
 
@@ -194,9 +259,17 @@ namespace Biob.Web.Api.Controllers
             return NoContent();
         }
 
+        [SwaggerOperation(
+            Summary = "Hard deletes a hall",
+            Description = "Hard deletes a hall in the database",
+            Consumes = new string[] { },
+            Produces = new string[] { "application/json" })]
+        [SwaggerResponse(200, "Successfully deleted a hall", null)]
+        [SwaggerResponse(400, "Request data is invalid", null)]
         [HttpDelete("{hallId}", Name = "DeleteHall")]
         [GuidCheckActionFilter(new string[] { "hallId" })]
-        public async Task<IActionResult> DeleteHallById([FromRoute]Guid hallId)
+        public async Task<IActionResult> DeleteHallById(
+            [FromRoute, SwaggerParameter(Description = "Id of hall to delete", Required = true)]Guid hallId)
         {
             var hallToDelete = await _hallRepository.GetHallAsync(hallId);
 
@@ -213,6 +286,32 @@ namespace Biob.Web.Api.Controllers
             }
 
             return NoContent();
+        }
+
+        [SwaggerOperation(
+            Summary = "Get option information",
+            Description = "Gets HTTP methods options for this route",
+            Consumes = new string[] { },
+            Produces = new string[] { })]
+        [SwaggerResponse(200, "Successfully returned options in http header", null)]
+        [HttpOptions]
+        public IActionResult GetHallsOptions()
+        {
+            Response.Headers.Add("Allow", "GET,POST,OPTIONS");
+            return Ok();
+        }
+
+        [SwaggerOperation(
+            Summary = "Get option information",
+            Description = "Gets HTTP methods options for this route",
+            Consumes = new string[] { },
+            Produces = new string[] { })]
+        [SwaggerResponse(200, "Successfully returned options in http header", null)]
+        [HttpOptions("{movieId}")]
+        public IActionResult GetHallOptions()
+        {
+            Response.Headers.Add("Allow", "GET,PATCH,PUT,OPTIONS,DELETE");
+            return Ok();
         }
 
         private IEnumerable<LinkDto> CreateLinksForHall(Guid id)

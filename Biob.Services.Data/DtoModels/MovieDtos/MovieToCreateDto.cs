@@ -11,7 +11,7 @@ namespace Biob.Services.Data.DtoModels.MovieDtos
         public string Title { get; set; }
         [StringLength(5000, ErrorMessage = "Movie Description must not be longer than 5000 characters")]
         public string Description { get; set; }
-        public string Length { get; set; }
+        public int LengthInSeconds { get; set; }
         public string Poster { get; set; }
         [StringLength(100, ErrorMessage = "Movie producer must not be longer than 100 characters")]
         public string Producer { get; set; }

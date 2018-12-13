@@ -13,17 +13,24 @@
     float: left;
 }
 
+/* movieDesc {
+    overflow: hidden;
+} */
+
+/* Also to be found in (and overwritten by) movies.css */
 .textContent {
-  overflow:auto;
+  overflow: hidden;
   height: 100px;
 }
 
 .textContent h1 {
-    font-size: 15px
+    font-size: 15px;
+    overflow: hidden;
 }
 .textContent p {
     font-size: 12px;
     text-align: left;
+    overflow: hidden;
 }
 
 img {

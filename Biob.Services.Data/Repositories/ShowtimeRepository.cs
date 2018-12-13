@@ -47,9 +47,9 @@ namespace Biob.Services.Data.Repositories
             showtimeToDelete.DeletedOn = DateTimeOffset.Now;
         }
 
-        public async Task<PagedList<Showtime>> GetAllShowtimesAsync(string orderBy, int pageNumber, int pageSize)
+        public async Task<PagedList<Showtime>> GetAllShowtimesAsync(Guid movieId, string orderBy, int pageNumber, int pageSize)
         {
-            var collectionBeforePaging = _context.Showtimes.Where(showtime => !showtime.IsDeleted).Applysort(orderBy, _propertyMappingService.GetPropertyMapping<ShowtimeDto, Showtime>());
+            var collectionBeforePaging = _context.Showtimes.Where(showtime => showtime.MovieId == movieId).Applysort(orderBy, _propertyMappingService.GetPropertyMapping<ShowtimeDto, Showtime>());
             var listToPage = await collectionBeforePaging.ToListAsync();
             return PagedList<Showtime>.Create(listToPage, pageNumber, pageSize);
         }

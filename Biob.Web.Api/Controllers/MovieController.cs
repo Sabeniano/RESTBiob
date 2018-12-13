@@ -186,7 +186,7 @@ namespace Biob.Web.Api.Controllers
             }
 
             // if any genre is added to movie, create many-to-many relationship for each genre
-            if (movieToCreate.GenreIds.Count > 0)
+            if (movieToCreate.GenreIds != null && movieToCreate.GenreIds.Count > 0)
             {
                 for (int i = 0; i < movieToCreate.GenreIds.Count; i++)
                 {
@@ -201,9 +201,13 @@ namespace Biob.Web.Api.Controllers
                     _logger.LogError("Saving changes to database while creating a moviegenre failed");
                 }
 
+                
+
             }
 
-            var movieDto = Mapper.Map<MovieDto>(movieToAdd);
+            var foundMovie = await _movieRepository.GetMovieAsync(movieToAdd.Id);
+
+            var movieDto = Mapper.Map<MovieDto>(foundMovie);
 
             if (mediaType == "application/vnd.biob.json+hateoas")
             {
@@ -566,7 +570,7 @@ namespace Biob.Web.Api.Controllers
         [SwaggerResponse(400, "Request data is invalid", null)]
         [HttpDelete("{movieId}", Name = "DeleteMovie")]
         [GuidCheckActionFilter(new string[] { "movieId" })]
-        public async Task<IActionResult> DeleteMovieAsync([FromRoute, SwaggerParameter(Description = "Id of movie to update", Required = true)] Guid movieId)
+        public async Task<IActionResult> DeleteMovieAsync([FromRoute, SwaggerParameter(Description = "Id of movie to delete", Required = true)] Guid movieId)
         {
             var movieFromDb = await _movieRepository.GetMovieAsync(movieId);
 
@@ -623,7 +627,7 @@ namespace Biob.Web.Api.Controllers
         [HttpOptions("{movieId}")]
         public IActionResult GetMovieOptions()
         {
-            Response.Headers.Add("Allow", "GET,PATCH,PUT,OPTIONS");
+            Response.Headers.Add("Allow", "GET,PATCH,PUT,OPTIONS,DELETE");
             return Ok();
         }
 

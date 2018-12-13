@@ -5,7 +5,7 @@ class Footer extends Component {
     return (
       <footer>
 		    <div className="footer">
-			    <p>&copy; Footer</p>
+			    <p>&copy; BIOB</p>
 		    </div>
       </footer>
     )

@@ -14,6 +14,7 @@ using Biob.Services.Data.Helpers;
 using System.Dynamic;
 using Microsoft.Extensions.Logging;
 using Biob.Web.Api.Filters;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Biob.Web.Api.Controllers
 {
@@ -55,10 +56,19 @@ namespace Biob.Web.Api.Controllers
             });
         }
 
+        [SwaggerOperation(
+            Summary = "Retrieve all tickets for a showtime",
+            Description = "Retrieves all tickets for a showtime in the database",
+            Consumes = new string[] { },
+            Produces = new string[] { "application/json", "application/vnd.biob.json+hateoas" })]
+        [SwaggerResponse(200, "Successfully retrieved every movie", typeof(TicketDto[]))]
+        [SwaggerResponse(400, "Request data is invalid", null)]
         [HttpGet(Name = "GetTickets")]
         [GuidCheckActionFilter(new string[] { "movieId", "showtimeId" })]
-        public async Task<IActionResult> GetAllTickets([FromRoute] Guid movieId,[FromRoute] Guid showtimeId, [FromQuery]RequestParameters requestParameters,
-                                                       [FromHeader(Name = "Accept")] string mediaType)
+        public async Task<IActionResult> GetAllTickets([FromRoute, SwaggerParameter(Description = "Id of the related movie", Required = true)] Guid movieId, 
+                                                        [FromRoute, SwaggerParameter(Description = "Id of the related showtime", Required = true)] Guid showtimeId, 
+                                                        [FromQuery, SwaggerParameter(Description = "Parameters for the request: PageNumber, OrderBy, Fields, SearchQuery, IncludeMetadata")] RequestParameters requestParameters,
+                                                        [FromHeader(Name = "Accept"), SwaggerParameter(Description = "Media type to return eg. json or json+hateoas")] string mediaType)
         {
             if (!await _ticketRepository.MovieExists(movieId))
             {
@@ -124,11 +134,20 @@ namespace Biob.Web.Api.Controllers
             }
         }
 
-
+        [SwaggerOperation(
+            Summary = "Get a ticket by ID",
+            Description = "Retrieves a ticket in the database with the provided id",
+            Consumes = new string[] { },
+            Produces = new string[] { "application/json", "application/vnd.biob.json+hateoas" })]
+        [SwaggerResponse(200, "Successfully retrieved a movie", typeof(TicketDto))]
+        [SwaggerResponse(400, "Request data is invalid", null)]
         [HttpGet("{ticketId}", Name = "GetTicket")]
         [GuidCheckActionFilter(new string[] { "movieId", "showtimeId", "ticketId" })]
-        public async Task<IActionResult> GetOneTicket([FromRoute] Guid movieId, [FromRoute] Guid showtimeId,[FromRoute]Guid ticketId, [FromQuery] string fields,
-                                                      [FromHeader(Name = "Accept")] string mediaType)
+        public async Task<IActionResult> GetOneTicket([FromRoute, SwaggerParameter(Description = "Id of the related movie", Required = true)] Guid movieId, 
+                                                        [FromRoute, SwaggerParameter(Description = "Id of the related showtime", Required = true)]Guid showtimeId, 
+                                                        [FromRoute, SwaggerParameter(Description = "Id of the ticket to get", Required = true)]Guid ticketId, 
+                                                        [FromQuery, SwaggerParameter(Description = "Specification of what ticket fields to return")] string fields,
+                                                        [FromHeader(Name = "Accept"), SwaggerParameter(Description = "Media type to return eg. json or json+hateoas")] string mediaType)
         {
 
             if (!await _ticketRepository.MovieExists(movieId))
@@ -141,7 +160,7 @@ namespace Biob.Web.Api.Controllers
                 return NotFound();
             }
 
-            if(!await _ticketRepository.TicketExists(ticketId))
+            if (!await _ticketRepository.TicketExists(ticketId))
             {
                 return NotFound();
             }
@@ -165,10 +184,18 @@ namespace Biob.Web.Api.Controllers
             }
         }
 
+        [SwaggerOperation(
+           Summary = "Create a ticket",
+           Description = "creates a ticket in the database",
+           Consumes = new string[] { "application/json" },
+           Produces = new string[] { "application/json", "application/vnd.biob.json+hateoas" })]
+        [SwaggerResponse(200, "Successfully created a ticket", typeof(TicketDto))]
         [HttpPost(Name = "CreateTicket")]
-        [GuidCheckActionFilter(new string[] { "movieId", "showtimeId", "ticketId" })]
-        public async Task<IActionResult> CreateTicketAsync([FromBody] TicketToCreateDto ticketToCreateDto, [FromHeader(Name = "Accept")] string mediaType,
-                                                           [FromRoute] Guid movieId, [FromRoute] Guid showtimeId, [FromRoute] Guid  ticketId)
+        [GuidCheckActionFilter(new string[] { "movieId", "showtimeId"})]
+        public async Task<IActionResult> CreateTicketAsync([FromBody, SwaggerParameter(Description = "Values of the ticket to be created eg. which seat and what price", Required = true)] TicketToCreateDto ticketToCreateDto, 
+                                                           [FromHeader(Name = "Accept"), SwaggerParameter(Description = "Media type to return eg. json or json+hateoas")] string mediaType,
+                                                           [FromRoute, SwaggerParameter(Description = "Id of the related movie", Required = true)] Guid movieId, 
+                                                           [FromRoute, SwaggerParameter(Description = "Id of the related showtime", Required = true)] Guid showtimeId)
         {
 
             if (!await _showtimeRepository.MovieExists(movieId))
@@ -177,11 +204,6 @@ namespace Biob.Web.Api.Controllers
             }
 
             if (!await _ticketRepository.ShowtimeExists(showtimeId))
-            {
-                return NotFound();
-            }
-
-            if (!await _ticketRepository.TicketExists(ticketId))
             {
                 return NotFound();
             }
@@ -197,7 +219,7 @@ namespace Biob.Web.Api.Controllers
                 //{
                 //    //Not sure if this is enough. Could be tested. 
                 //    _logger.LogError("No available seats");
-                    
+
                 //}
                 //ticketToCreateDto.SeatId = availableSeat.Id;
             }
@@ -206,7 +228,7 @@ namespace Biob.Web.Api.Controllers
 
 
             ticket.ShowtimeId = showtimeId;
-            
+
             ticket.Id = Guid.NewGuid();
 
             _ticketRepository.AddTicket(ticket);
@@ -216,7 +238,7 @@ namespace Biob.Web.Api.Controllers
                 _logger.LogError("Saving changes to database while creating a showtime failed");
             }
 
-            var ticketDto = Mapper.Map<TicketDto>(ticket); 
+            var ticketDto = Mapper.Map<TicketDto>(ticket);
 
             if (mediaType == "application/vnd.biob.json+hateoas")
             {
@@ -235,10 +257,20 @@ namespace Biob.Web.Api.Controllers
             }
         }
 
+        [SwaggerOperation(
+            Summary = "Update a ticket",
+            Description = "Updates a ticket in the database",
+            Consumes = new string[] { "application/json" },
+            Produces = new string[] { "application/json", "application/vnd.biob.json+hateoas" })]
+        [SwaggerResponse(200, "Successfully updated a ticket", typeof(TicketDto))]
+        [SwaggerResponse(400, "Request data is invalid", null)]
         [HttpPut("{ticketId}", Name = "UpdateTicket")]
         [GuidCheckActionFilter(new string[] { "movieId", "showtimeId", "ticketId" })]
-        public async Task<IActionResult> UpdateTicket([FromRoute] Guid ticketId, [FromRoute] Guid movieId, [FromRoute] Guid showtimeId, 
-                                                        [FromBody] TicketToUpdateDto ticketToUpdate, [FromHeader(Name = "Accept")] string mediaType)
+        public async Task<IActionResult> UpdateTicket([FromRoute, SwaggerParameter(Description = "Id of ticket to update", Required = true)] Guid ticketId, 
+                                                        [FromRoute, SwaggerParameter(Description = "Id of related movie", Required = true)] Guid movieId, 
+                                                        [FromRoute, SwaggerParameter(Description = "Id of related showtime", Required = true)] Guid showtimeId,
+                                                        [FromBody, SwaggerParameter(Description = "Fields to update and their new value", Required = true)] TicketToUpdateDto ticketToUpdate, 
+                                                        [FromHeader(Name = "Accept"), SwaggerParameter(Description = "Media type to return eg. json or json+hateoas")] string mediaType)
         {
             if (!await _showtimeRepository.MovieExists(movieId))
             {
@@ -250,7 +282,7 @@ namespace Biob.Web.Api.Controllers
                 return NotFound();
             }
 
-            
+
             var ticketFromDb = await _ticketRepository.GetTicketAsync(ticketId);
 
             //  upserting if ticket does not already exist
@@ -259,7 +291,7 @@ namespace Biob.Web.Api.Controllers
                 var ticketEntity = Mapper.Map<Ticket>(ticketToUpdate);
                 ticketEntity.Id = ticketId;
                 ticketEntity.ShowtimeId = showtimeId;
-                
+
                 var availableSeat = await _seatRepository.GetFirstAvailableSeatByShowtimeIdAsync(showtimeId);
                 ticketEntity.SeatId = availableSeat.Id;
 
@@ -301,11 +333,20 @@ namespace Biob.Web.Api.Controllers
             return NoContent();
         }
 
+        [SwaggerOperation(
+            Summary = "Partially update a movie",
+            Description = "Partially updates a movie in the database",
+            Consumes = new string[] { "application/json-patch+json" },
+            Produces = new string[] { "application/json", "application/vnd.biob.json+hateoas" })]
+        [SwaggerResponse(200, "Successfully partially updated a movie", typeof(TicketDto))]
+        [SwaggerResponse(400, "Request data is invalid", null)]
         [HttpPatch("{ticketId}", Name = "PartiallyUpdateTicket")]
         [GuidCheckActionFilter(new string[] { "movieId", "showtimeId", "ticketId" })]
-        public async Task<IActionResult> PartiallyUpdateTicket([FromRoute] Guid ticketId, JsonPatchDocument<TicketToUpdateDto> patchDoc,
-                                                               [FromRoute] Guid movieId, [FromRoute] Guid showtimeId,
-                                                               [FromHeader(Name = "Accept")] string mediaType)
+        public async Task<IActionResult> PartiallyUpdateTicket([FromRoute, SwaggerParameter(Description = "Id of ticket to update", Required = true)] Guid ticketId,
+                                                               [FromBody, SwaggerParameter(Description = "Jsonpatch operation document to update", Required = true)] JsonPatchDocument<TicketToUpdateDto> patchDoc,
+                                                               [FromRoute, SwaggerParameter(Description = "Id of the related movie", Required = true)] Guid movieId, 
+                                                               [FromRoute, SwaggerParameter(Description = "Id of the related showtime", Required = true)] Guid showtimeId,
+                                                               [FromHeader(Name = "Accept"), SwaggerParameter(Description = "media type to request betwen json or json+hateoas")] string mediaType)
         {
 
             if (!await _ticketRepository.MovieExists(movieId))
@@ -388,9 +429,18 @@ namespace Biob.Web.Api.Controllers
             return NoContent();
         }
 
+        [SwaggerOperation(
+            Summary = "Soft deletes a ticket",
+            Description = "Soft deletes a ticket in the database",
+            Consumes = new string[] { },
+            Produces = new string[] { "application/json", "application/vnd.biob.json+hateoas" })]
+        [SwaggerResponse(200, "Successfully deleted a ticket", null)]
+        [SwaggerResponse(400, "Request data is invalid", null)]
         [HttpDelete("{ticketId}", Name = "DeleteTicket")]
         [GuidCheckActionFilter(new string[] { "movieId", "showtimeId", "ticketId" })]
-        public async Task<IActionResult> DeleteTicketAsync([FromRoute] Guid movieId, [FromRoute] Guid showtimeId,[FromRoute] Guid ticketId)
+        public async Task<IActionResult> DeleteTicketAsync([FromRoute, SwaggerParameter(Description = "If of the related movie", Required = true)] Guid movieId, 
+                                                            [FromRoute, SwaggerParameter(Description = "Id of the related showtime", Required = true)] Guid showtimeId, 
+                                                            [FromRoute, SwaggerParameter(Description = "Id of the ticket to delete", Required = true)] Guid ticketId)
         {
             if (!await _ticketRepository.MovieExists(movieId))
             {
@@ -419,6 +469,11 @@ namespace Biob.Web.Api.Controllers
             return NoContent();
         }
 
+        [SwaggerOperation(
+            Summary = "Get option information",
+            Description = "Gets HTTP methods options for this route",
+            Consumes = new string[] { },
+            Produces = new string[] { })]
         [HttpOptions]
         public IActionResult GetTicketsOptions()
         {
@@ -426,6 +481,11 @@ namespace Biob.Web.Api.Controllers
             return Ok();
         }
 
+        [SwaggerOperation(
+            Summary = "Get option information",
+            Description = "Gets HTTP methods options for this route",
+            Consumes = new string[] { },
+            Produces = new string[] { })]
         [HttpOptions("{ticketId}")]
         public IActionResult GetTicketOptions()
         {

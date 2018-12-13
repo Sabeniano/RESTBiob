@@ -9,6 +9,7 @@ using Biob.Web.Api.Helpers;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Swashbuckle.AspNetCore.Annotations;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -46,6 +47,13 @@ namespace Biob.Web.Api.Controllers
             });
         }
 
+        [SwaggerOperation(
+            Summary = "Retrieve every showtime",
+            Description = "Retrieves every showtime in the database",
+            Consumes = new string[] { },
+            Produces = new string[] { "application/json", "application/vnd.biob.json+hateoas" })]
+        [SwaggerResponse(200, "Successfully retrieved every showtime", typeof(ShowtimeDto[]))]
+        [SwaggerResponse(400, "Request data is invalid", null)]
         [HttpGet(Name = "GetShowtimes")]
         [GuidCheckActionFilter(new string[] { "movieId"})]
         public async Task<IActionResult> GetAllShowtimesAsync([FromRoute] Guid movieId,[FromQuery]RequestParameters requestParameters, [FromHeader(Name = "Accept")] string mediaType)
@@ -72,7 +80,7 @@ namespace Biob.Web.Api.Controllers
                 return BadRequest();
             }
 
-            var showtimesPagedList = await _showtimeRepository.GetAllShowtimesAsync(requestParameters.OrderBy, requestParameters.PageNumber, requestParameters.PageSize);
+            var showtimesPagedList = await _showtimeRepository.GetAllShowtimesAsync(movieId, requestParameters.OrderBy, requestParameters.PageNumber, requestParameters.PageSize);
 
             var showtimes = Mapper.Map<IEnumerable<ShowtimeDto>>(showtimesPagedList);
 
@@ -106,11 +114,21 @@ namespace Biob.Web.Api.Controllers
             }
         }
 
+        [SwaggerOperation(
+            Summary = "Retrieve one showtime by ID",
+            Description = "Retrieves showtime in the database by id",
+            Consumes = new string[] { },
+            Produces = new string[] { "application/json", "application/vnd.biob.json+hateoas" })]
+        [SwaggerResponse(200, "Successfully retrieved a showtime", typeof(ShowtimeDto))]
+        [SwaggerResponse(400, "Request data is invalid", null)]
         [HttpGet("{showtimeId}", Name = "GetShowtime")]
         [GuidCheckActionFilter(new string[] { "movieId", "showtimeId" })]
-        public async Task<IActionResult> GetOneShowtimeAsync([FromRoute]Guid showtimeId, [FromRoute]Guid movieId, [FromQuery] string fields, [FromHeader(Name = "Accept")] string mediaType)
+        public async Task<IActionResult> GetOneShowtimeAsync(
+            [FromRoute, SwaggerParameter(Description ="the ID to find showtime by", Required = true)]Guid showtimeId,
+            [FromRoute, SwaggerParameter(Description = "the movie ID to find showtime by", Required = true)]Guid movieId,
+            [FromQuery, SwaggerParameter(Description = "fields requested for data shaping", Required = false)] string fields,
+            [FromHeader(Name = "Accept"), SwaggerParameter(Description = "media type to request betwen json or json+hateoas")] string mediaType)
         {
-
             if (!await _showtimeRepository.MovieExists(movieId))
             {
                 return NotFound();
@@ -144,9 +162,18 @@ namespace Biob.Web.Api.Controllers
             }
         }
 
+        [SwaggerOperation(
+            Summary = "Create a showtime",
+            Description = "creates a showtime in the database",
+            Consumes = new string[] { "application/json" },
+            Produces = new string[] { "application/json", "application/vnd.biob.json+hateoas" })]
+        [SwaggerResponse(200, "Successfully created a showtime", typeof(ShowtimeDto))]
         [HttpPost]
         [GuidCheckActionFilter(new string[] { "movieId", "showtimeId" })]
-        public async Task<IActionResult> CreateShowtimeAsync([FromRoute]Guid movieId, [FromBody] ShowtimeToCreateDto showtimeToCreate, [FromHeader(Name = "Accept")] string mediaType)
+        public async Task<IActionResult> CreateShowtimeAsync(
+            [FromRoute, SwaggerParameter(Description = "the movie ID to create showtime by", Required = true)]Guid movieId,
+            [FromBody, SwaggerParameter(Description = "Showtimes to create", Required = true)] ShowtimeToCreateDto showtimeToCreate,
+            [FromHeader(Name = "Accept"), SwaggerParameter(Description = "media type to request betwen json or json+hateoas")] string mediaType)
         {
 
             if (!await _showtimeRepository.MovieExists(movieId))
@@ -182,9 +209,20 @@ namespace Biob.Web.Api.Controllers
             }
         }
 
+        [SwaggerOperation(
+            Summary = "Update a showtime",
+            Description = "Updates a showtime in the database",
+            Consumes = new string[] { "application/json" },
+            Produces = new string[] { "application/json", "application/vnd.biob.json+hateoas" })]
+        [SwaggerResponse(200, "Successfully updated a showtime", typeof(ShowtimeDto))]
+        [SwaggerResponse(400, "Request data is invalid", null)]
         [HttpPut("{showtimeId}", Name = "UpdateShowtime")]
         [GuidCheckActionFilter(new string[] { "movieId", "showtimeId" })]
-        public async Task<IActionResult> UpdateShowtimeAsync([FromRoute]Guid movieId, [FromRoute] Guid showtimeId, [FromBody] ShowtimeToUpdateDto showtimeToUpdate, [FromHeader(Name = "Accept")] string mediaType)
+        public async Task<IActionResult> UpdateShowtimeAsync(
+            [FromRoute, SwaggerParameter(Description = "Movie id of showtime to update", Required = true)]Guid movieId,
+            [FromRoute, SwaggerParameter(Description = "Id of showtime to update", Required = true)] Guid showtimeId,
+            [FromBody, SwaggerParameter(Description = "Showtime to update", Required = true)] ShowtimeToUpdateDto showtimeToUpdate,
+            [FromHeader(Name = "Accept"), SwaggerParameter(Description = "media type to request betwen json or json+hateoas")] string mediaType)
         {
 
             if (!await _showtimeRepository.MovieExists(movieId))
@@ -240,9 +278,20 @@ namespace Biob.Web.Api.Controllers
             return NoContent();
         }
 
+        [SwaggerOperation(
+            Summary = "Partially update a showtime",
+            Description = "Partially updates a showtime in the database",
+            Consumes = new string[] { "application/json" },
+            Produces = new string[] { "application/json", "application/vnd.biob.json+hateoas" })]
+        [SwaggerResponse(200, "Successfully updated a showtime", typeof(ShowtimeDto))]
+        [SwaggerResponse(400, "Request data is invalid", null)]
         [HttpPatch("{showtimeId}", Name = "PartiallyUpdateShowtime")]
         [GuidCheckActionFilter(new string[] { "movieId", "showtimeId" })]
-        public async Task<IActionResult> PartiuallyUpdateShowtimeAsync([FromRoute]Guid movieId, [FromRoute] Guid showtimeId, JsonPatchDocument<ShowtimeToUpdateDto> patchDoc, [FromHeader(Name = "Accept")] string mediaType)
+        public async Task<IActionResult> PartiuallyUpdateShowtimeAsync(
+            [FromRoute, SwaggerParameter(Description = "ID of showtime to update", Required = true)]Guid showtimeId,
+            [FromRoute, SwaggerParameter(Description = "ID of movie to update showtime", Required = true)]Guid movieId,
+            [FromBody, SwaggerParameter(Description = "Jsonpatch operation document to update", Required = true)] JsonPatchDocument<ShowtimeToUpdateDto> patchDoc,
+            [FromHeader(Name = "Accept"), SwaggerParameter(Description = "media type to request betwen json or json+hateoas")] string mediaType)
         {
 
             if (!await _showtimeRepository.MovieExists(movieId))
@@ -316,9 +365,18 @@ namespace Biob.Web.Api.Controllers
             return NoContent();
         }
 
+        [SwaggerOperation(
+           Summary = "Soft deletes a showtime",
+           Description = "Soft deletes a showtime in the database",
+           Consumes = new string[] { },
+           Produces = new string[] { "application/json", "application/vnd.biob.json+hateoas" })]
+        [SwaggerResponse(200, "Successfully deleted a showtime", null)]
+        [SwaggerResponse(400, "Request data is invalid", null)]
         [HttpDelete("{showtimeId}", Name = "DeleteShowtime")]
         [GuidCheckActionFilter(new string[] { "movieId", "showtimeId" })]
-        public async Task<IActionResult> DeleteShowtimeAsync([FromRoute] Guid showtimeId, [FromRoute]Guid movieId)
+        public async Task<IActionResult> DeleteShowtimeAsync(
+            [FromRoute, SwaggerParameter(Description = "Id of showtime to delete", Required = true)] Guid showtimeId,
+            [FromRoute, SwaggerParameter(Description = "ID of movie to delete showtime", Required = true)]Guid movieId)
         {
 
             if (!await _showtimeRepository.MovieExists(movieId))
@@ -344,6 +402,12 @@ namespace Biob.Web.Api.Controllers
             return NoContent();
         }
 
+        [SwaggerOperation(
+            Summary = "Get option information",
+            Description = "Gets HTTP methods options for this route",
+            Consumes = new string[] { },
+            Produces = new string[] { })]
+        [SwaggerResponse(200, "Successfully returned options in http header", null)]
         [HttpOptions]
         public IActionResult GetShowtimesOptions()
         {
@@ -351,6 +415,12 @@ namespace Biob.Web.Api.Controllers
             return Ok();
         }
 
+        [SwaggerOperation(
+            Summary = "Get option information",
+            Description = "Gets HTTP methods options for this route",
+            Consumes = new string[] { },
+            Produces = new string[] { })]
+        [SwaggerResponse(200, "Successfully returned options in http header", null)]
         [HttpOptions("{showtimeId}")]
         public IActionResult GetShowtimeOptions()
         {

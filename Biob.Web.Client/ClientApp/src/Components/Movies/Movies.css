@@ -1,0 +1,34 @@
+.wrapper {
+  width: 1200px;
+  margin: auto;
+  
+  }
+    
+.pictureContent {
+    width: 250px;
+    height: 400px;
+    margin: 20px 0px 0px 20px;
+    background-color: #333;
+    padding: 10px;
+    float: left;
+}
+
+.textContent {
+    /* overflow auto to get scrollbar back */
+  overflow:hidden;
+  height: 100px;
+
+}
+
+.textContent h1 {
+    font-size: 15px
+}
+.textContent p {
+    font-size: 12px;
+    text-align: left;
+}
+
+img {
+    width: 250px;
+    height: 300px;
+}

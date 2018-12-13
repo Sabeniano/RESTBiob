@@ -4,6 +4,10 @@
     background: #333;
   }
   
+  .topNavContainer{
+    position: relative;
+  }
+
   header::after {
     content: '';
     display: table;
@@ -13,51 +17,95 @@
   nav {
     width: 100%;
     background-color: #333;
+    position: relative;
   }
   
   nav ul {
-    width: 80%;
-    margin: 0 auto;
-    padding: 0;
+    /* width: 80%; */
+    /* margin: 0 auto; */
+    /* padding: 0; */
+    margin: 20px;
+    position: relative;
+    float: left;
   }
   
   nav li {
     list-style: none;
     display: inline-block;
-    padding: 20px;
+    margin: 9px;
+    /* padding: 20px; */
   }
   
   nav li:hover {
     background-color: rgb(141, 10, 10);
   }
+
   nav li .navLink {
     color: #fff;
     text-decoration: none;
     text-transform: uppercase;
     font-size: 15px;
   }
+  .topLogo{
+    width: 57px; 
+    height: 57px;
+    /* height: 8px; */
+    /* height: 85px; */
+    position: relative;
+    float: left;
+    margin: 10px;
+  }
+
+  .toolbarItem {
+    display: inline-block;
+  }
+
+  .menuDropdown {
+     display: none; 
+  }
+  
+  /*hidden is not used anyways*/
+  .hidden {
+    display: none;
+  }
 
   .toggle
-{
-  width: 100%;
-  padding: 10px 20px;
-  background: #333;
-  text-align: right;
-  box-sizing: border-box;
-  color: #fff;
-  font-size: 30px;
-  display: none;
-}
+  {
+    /* width: 100%; */
+    /* padding: 10px 20px; */
+    margin: 20px;
+    
+
+    background: #333;
+    /* text-align: right; */
+    /* box-sizing: border-box; */
+    color: #fff;
+    font-size: 30px;
+    display: none;
+    position: relative;
+    float: right;
+  }
+
 @media (max-width: 768px){
   .toggle {
-    display: block;
+    display: inline-block;
+  }
+
+  .toolbarItem {
+    display: none;
+  }
+
+  .loginBar {
+    display: none;
   }
   ul {
-    width: 100%
+    /* width: 100%; */
   }
   ul li {
-    display: block;
+    display: none;
     text-align: center;
   }
 }
+
   /* Header */
+
